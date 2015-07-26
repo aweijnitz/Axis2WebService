@@ -9,7 +9,7 @@
 
 ## Setup
 
-Edit ```build.xml`` to reflect local paths.
+Edit ```build.xml``` to reflect local paths.
 
 ## Compile and deploy
 
