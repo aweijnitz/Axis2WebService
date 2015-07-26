@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Axis2WebService" default="default" basedir=".">
+    <description>Builds, tests, and runs the project Axis2WebService.</description>
+    <property environment="env"/>
+    <property name="build.dir" value="build"/>
+    <property name="axis2.dir" value="/Users/anders/axis2-1.6.3"/>
+    <property name="axis2.deploy.dir" value="/Users/anders/apache-tomcat-8.0.24/webapps/axis2/WEB-INF/services"/>
+ 
+    <path id="axis2.classpath">
+        <fileset dir="${axis2.dir}/lib">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+ 
+    <target name="compile.service">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${build.dir}/classes"/>
+        <mkdir dir="${build.dir}/resources"/>
+        <!--First let's compile the classes-->
+        <javac debug="on"
+        fork="true"
+        includeantruntime="false"
+        destdir="${build.dir}/classes"
+        srcdir="${basedir}/src"
+        classpathref="axis2.classpath">
+        </javac>
+    </target>
+ 
+    <target name="generate.wsdl" depends="compile.service">
+        <taskdef name="java2wsdl"
+          classname="org.apache.ws.java2wsdl.Java2WSDLTask"
+          classpathref="axis2.classpath"/>
+        <java2wsdl className="info.andersw.ws.MyService"
+            outputLocation="${build.dir}"
+            targetNamespace="http://andersw.info/"
+            schemaTargetNamespace="http://andersw.info/xsd">
+            <classpath>
+                <pathelement path="${axis2.classpath}"/>
+                <pathelement location="${build.dir}/classes"/>
+            </classpath>
+        </java2wsdl>
+    </target>
+ 
+    <target name="generate.service" depends="compile.service">
+        <copy toDir="${build.dir}/classes" failonerror="false">
+            <fileset dir="${basedir}/resources">
+                <include name="**/*.xml"/>
+            </fileset>
+        </copy>
+        <jar destfile="${build.dir}/MyService.aar">
+            <fileset excludes="**/Test.class" dir="${build.dir}/classes"/>
+        </jar>
+    </target>
+ 
+    <target name="generate.client" depends="compile.service">
+        <taskdef name="wsdl2java"
+          classname="org.apache.axis2.tool.ant.AntCodegenTask"
+          classpathref="axis2.classpath"/>
+        <wsdl2java
+            wsdlfilename="${build.dir}/MyService.wsdl"
+            output="${build.dir}/resources" />
+    </target>
+ 
+    <target name="deploy" depends="generate.service">
+      <copy todir="${axis2.deploy.dir}">
+        <fileset file="${build.dir}/*.aar" />
+      </copy>
+    </target>
+    
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+</project>
